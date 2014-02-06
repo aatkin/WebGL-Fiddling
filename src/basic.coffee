@@ -1,5 +1,11 @@
 gl = canvas = squareVerticesBuffer = squareVerticesColorBuffer = mvMatrix = shaderProgram = vertexPositionAttribute = vertexColorAttribute = perspectiveMatrix = null
-horizAspect = 600.0/800.0
+cubeVerticesBuffer = cubeVerticesColorBuffer = cubeVerticesIndexBuffer = null
+cubeRotation = cubeXOffset = cubeYOffset = cubeZOffset = lastCubeUpdateTime = 0
+xIncValue = 0.2
+yIncValue = -0.4
+zIncValue = 0
+horizAspect = 480.0/640.0
+mvMatrixStack = []
 
 $(document).ready( ->
 	start()
@@ -19,7 +25,7 @@ start = ->
 		initShaders()
 		initBuffers()
 		drawScene()
-		# setInterval(drawScene, 15)
+		setInterval(drawScene, 30)
 
 initWebGL = (canvas) ->
 	gl = null
@@ -53,44 +59,138 @@ initShaders = () ->
 	gl.enableVertexAttribArray(vertexColorAttribute)
 
 initBuffers = ->
-	squareVerticesBuffer = gl.createBuffer()
-	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer)
+	cubeVerticesBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer)
+
+	# vertices = [
+	# 	1.0, 1.0, 0.0,
+	# 	-1.0, 1.0, 0.0,
+	# 	1.0, -1.0, 0.0,
+	# 	-1.0, -1.0, 0.0
+	# ]
 
 	vertices = [
-		1.0, 1.0, 0.0,
-		-1.0, 1.0, 0.0,
-		1.0, -1.0, 0.0,
-		-1.0, -1.0, 0.0
+		# Front face
+	    -1.0, -1.0,  1.0,
+	     1.0, -1.0,  1.0,
+	     1.0,  1.0,  1.0,
+	    -1.0,  1.0,  1.0,
+	    
+	    # Back face
+	    -1.0, -1.0, -1.0,
+	    -1.0,  1.0, -1.0,
+	     1.0,  1.0, -1.0,
+	     1.0, -1.0, -1.0,
+	    
+	    # Top face
+	    -1.0,  1.0, -1.0,
+	    -1.0,  1.0,  1.0,
+	     1.0,  1.0,  1.0,
+	     1.0,  1.0, -1.0,
+	    
+	    # Bottom face
+	    -1.0, -1.0, -1.0,
+	     1.0, -1.0, -1.0,
+	     1.0, -1.0,  1.0,
+	    -1.0, -1.0,  1.0,
+	    
+	    # Right face
+	     1.0, -1.0, -1.0,
+	     1.0,  1.0, -1.0,
+	     1.0,  1.0,  1.0,
+	     1.0, -1.0,  1.0,
+	    
+	    # Left face
+	    -1.0, -1.0, -1.0,
+	    -1.0, -1.0,  1.0,
+	    -1.0,  1.0,  1.0,
+	    -1.0,  1.0, -1.0
 	]
 
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 
+	# colors = [
+	# 	1.0, 1.0, 1.0, 1.0,
+	# 	1.0, 0.0, 0.0, 1.0,
+	# 	0.0, 1.0, 0.0, 1.0,
+	# 	0.0, 0.0, 1.0, 1.0
+	# ]
+
+	# front, back, top, bottom, right, left
 	colors = [
-		1.0, 1.0, 1.0, 1.0,
-		1.0, 0.0, 0.0, 1.0,
-		0.0, 1.0, 0.0, 1.0,
-		0.0, 0.0, 1.0, 1.0
+		[1.0,  0.0,  0.0,  1.0], 
+	    [0.9,  0.0,  0.0,  1.0],
+	    [0.8,  0.0,  0.0,  1.0],
+	    [0.7,  0.0,  0.0,  1.0],
+	    [0.6,  0.0,  0.0,  1.0],
+	    [0.5,  0.0,  0.0,  1.0] 
 	]
 
-	squareVerticesColorBuffer = gl.createBuffer()
-	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer)
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
+	generatedColors = []
+
+	for j in [0..5] by 1
+		c = colors[j]
+		for i in [0..3] by 1
+			generatedColors = generatedColors.concat c
+
+	# squareVerticesColorBuffer = gl.createBuffer()
+	cubeVerticesColorBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesColorBuffer)
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), gl.STATIC_DRAW)
+
+	cubeVerticesIndexBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVerticesIndexBuffer)
+
+	cubeVertexIndices = [
+		0,  1,  2,      0,  2,  3,
+	    4,  5,  6,      4,  6,  7,
+	    8,  9,  10,     8,  10, 11,
+	    12, 13, 14,     12, 14, 15,
+	    16, 17, 18,     16, 18, 19,
+	    20, 21, 22,     20, 22, 23
+	]
+
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW)
 
 drawScene = ->
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	perspectiveMatrix = makePerspective(45, 800.0/600.0, 0.1, 100.0)
+	perspectiveMatrix = makePerspective(60, 640.0/480.0, 0.1, 100.0)
 
 	loadIdentity()
 	mvTranslate([-0.0, 0.0, -6.0])
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer)
+	mvPushMatrix()
+	mvRotate(cubeRotation, [1, 1, 0])
+	# mvTranslate([cubeXOffset, cubeYOffset, cubeZOffset])
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer)
 	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0)
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer)
+	gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesColorBuffer)
 	gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0)
 
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVerticesIndexBuffer)
 	setMatrixUniforms()
-	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0)
+
+	mvPopMatrix()
+
+	currentTime = (new Date).getTime()
+
+	if lastCubeUpdateTime
+		delta = currentTime - lastCubeUpdateTime
+
+		cubeRotation += (30 * delta) / 1000.0
+		# cubeXOffset += xIncValue * ((30 * delta) / 1000.0)
+		# cubeYOffset += yIncValue * ((30 * delta) / 1000.0)
+		# cubeZOffset += zIncValue * ((30 * delta) / 1000.0)
+
+		# if Math.abs(cubeYOffset) > 2.5
+		# 	xIncValue = -xIncValue
+		# 	yIncValue = -yIncValue
+		# 	zIncValue = -zIncValue
+
+	lastCubeUpdateTime = currentTime
 
 # Auxiliary functions
 
@@ -138,3 +238,22 @@ setMatrixUniforms = ->
 
 	mvUniform = gl.getUniformLocation(shaderProgram, 'uMVMatrix')
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()))
+
+mvPushMatrix = (m) ->
+	if m
+		mvMatrixStack.push m.dup()
+		mvMatrix = m.dup()
+	else
+		mvMatrixStack.push mvMatrix.dup()
+
+mvPopMatrix = ->
+	if !mvMatrixStack.length
+		throw 'Cant pop from an empty matrix stack.'
+	mvMatrix = mvMatrixStack.pop()
+	return mvMatrix
+
+mvRotate = (angle, v) ->
+	inRadians = angle * (Math.PI / 180.0)
+
+	m = Matrix.Rotation(inRadians, $V([v[0], v[1], v[2]])).ensure4x4()
+	multMatrix(m)
