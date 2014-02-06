@@ -4,7 +4,8 @@ cubeRotation = cubeXOffset = cubeYOffset = cubeZOffset = lastCubeUpdateTime = 0
 xIncValue = 0.2
 yIncValue = -0.4
 zIncValue = 0
-horizAspect = 480.0/640.0
+# horizAspect = 480.0/640.0
+horizAspect = 640.0/480.0
 mvMatrixStack = []
 
 $(document).ready( ->
@@ -25,7 +26,7 @@ start = ->
 		initShaders()
 		initBuffers()
 		drawScene()
-		setInterval(drawScene, 30)
+		setInterval(drawScene, 15)
 
 initWebGL = (canvas) ->
 	gl = null
@@ -154,7 +155,7 @@ initBuffers = ->
 
 drawScene = ->
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	perspectiveMatrix = makePerspective(60, 640.0/480.0, 0.1, 100.0)
+	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
 
 	loadIdentity()
 	mvTranslate([-0.0, 0.0, -6.0])
