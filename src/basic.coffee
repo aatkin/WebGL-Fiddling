@@ -1,4 +1,4 @@
-gl = canvas = squareVerticesBuffer = mvMatrix = shaderProgram = vertexPositionAttribute = perspectiveMatrix = null
+gl = canvas = squareVerticesBuffer = squareVerticesColorBuffer = mvMatrix = shaderProgram = vertexPositionAttribute = vertexColorAttribute = perspectiveMatrix = null
 horizAspect = 600.0/800.0
 
 $(document).ready( ->
@@ -49,6 +49,9 @@ initShaders = () ->
 	vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition')
 	gl.enableVertexAttribArray(vertexPositionAttribute)
 
+	vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor')
+	gl.enableVertexAttribArray(vertexColorAttribute)
+
 initBuffers = ->
 	squareVerticesBuffer = gl.createBuffer()
 	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer)
@@ -62,15 +65,30 @@ initBuffers = ->
 
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
 
+	colors = [
+		1.0, 1.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0
+	]
+
+	squareVerticesColorBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer)
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW)
+
 drawScene = ->
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	perspectiveMatrix = makePerspective(45, 800.0/600.0, 0.1, 100.0)
 
 	loadIdentity()
-	mvTranslate([1.0, 0.0, -6.0])
+	mvTranslate([-0.0, 0.0, -6.0])
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesBuffer)
 	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0)
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVerticesColorBuffer)
+	gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0)
+
 	setMatrixUniforms()
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
