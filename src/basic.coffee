@@ -33,7 +33,12 @@ start = ->
 		initShaders()
 		initBuffers()
 		drawScene()
-		setInterval(drawScene, 1000 / 60)
+
+		setInterval( ->
+			stats.begin()
+			drawScene()
+			stats.end()
+		, 1000 / 60)
 
 initWebGL = (canvas) ->
 	gl = null
@@ -161,8 +166,6 @@ initBuffers = ->
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW)
 
 drawScene = ->
-	stats.begin()
-
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
 
@@ -201,8 +204,6 @@ drawScene = ->
 		# 	zIncValue = -zIncValue
 
 	lastCubeUpdateTime = currentTime
-
-	stats.end()
 
 # Auxiliary functions
 

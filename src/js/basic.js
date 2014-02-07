@@ -37,7 +37,11 @@ start = function() {
     initShaders();
     initBuffers();
     drawScene();
-    return setInterval(drawScene, 1000 / 60);
+    return setInterval(function() {
+      stats.begin();
+      drawScene();
+      return stats.end();
+    }, 1000 / 60);
   }
 };
 
@@ -98,7 +102,6 @@ initBuffers = function() {
 
 drawScene = function() {
   var currentTime, delta;
-  stats.begin();
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
   loadIdentity();
@@ -118,8 +121,7 @@ drawScene = function() {
     delta = currentTime - lastCubeUpdateTime;
     cubeRotation += (30 * delta) / 1000.0;
   }
-  lastCubeUpdateTime = currentTime;
-  return stats.end();
+  return lastCubeUpdateTime = currentTime;
 };
 
 initStats = function() {
