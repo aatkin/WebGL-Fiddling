@@ -8,12 +8,19 @@ zIncValue = 0
 horizAspect = 640.0/480.0
 mvMatrixStack = []
 
+stats = null
+
 $(document).ready( ->
+	initStats()
+
 	start()
 )
 
 start = ->
 	canvas = $('canvas.glcanvas')[0]
+	canvas.appendChild(stats.domElement)
+	# $('#container').appendChild(stats.domElement)
+	$('#stats').appendTo('#container')
 
 	initWebGL(canvas)
 
@@ -26,7 +33,7 @@ start = ->
 		initShaders()
 		initBuffers()
 		drawScene()
-		setInterval(drawScene, 15)
+		setInterval(drawScene, 1000 / 60)
 
 initWebGL = (canvas) ->
 	gl = null
@@ -154,6 +161,8 @@ initBuffers = ->
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(cubeVertexIndices), gl.STATIC_DRAW)
 
 drawScene = ->
+	stats.begin()
+
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
 
@@ -193,7 +202,17 @@ drawScene = ->
 
 	lastCubeUpdateTime = currentTime
 
+	stats.end()
+
 # Auxiliary functions
+
+initStats = ->
+	stats = new Stats()
+	stats.setMode(0)
+
+	stats.domElement.style.position = 'absolute'
+	stats.domElement.style.left = '0px'
+	stats.domElement.style.zIndex = 100
 
 getShader = (gl, id) ->
 	theSource = currentChild = shader = null
