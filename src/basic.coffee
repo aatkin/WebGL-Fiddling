@@ -10,6 +10,7 @@ yIncValue = -0.4
 zIncValue = 0 
 horizAspect = 640.0/480.0 
 mvMatrixStack = []
+moveSpeed = 1
 
 stats = null
 
@@ -213,7 +214,12 @@ drawScene = ->
 	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
 
 	loadIdentity()
-	mvTranslate([-0.0, 0.0, -6.0])
+
+	moveSpeed += 0.0125
+	vecX = 3.0 * Math.cos(moveSpeed)
+	vecY = 1.5 * Math.sin(moveSpeed)
+
+	mvTranslate([vecX, vecY, -10.0])
 
 	mvPushMatrix()
 	mvRotate(cubeRotation, [1, 1, 0])
