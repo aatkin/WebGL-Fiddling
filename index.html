@@ -29,10 +29,10 @@
 		<!-- Fragment shader -->
 		<script id="shader-fs" type="x-shader/x-fragment">
 			// varying lowp vec4 vColor;
-			uniform lowp vec4 colorUniform;
+			precision highp float;
+			uniform vec4 colorUniform;
 
 			void main(void) {
-				// gl_FragColor = vec4(vec3(colorUniform[0], colorUniform[1], colorUniform[2]), 1.0);
 				gl_FragColor = colorUniform;
 			}
 		</script>

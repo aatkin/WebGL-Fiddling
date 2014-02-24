@@ -1,4 +1,4 @@
-gl = canvas =  mvMatrix = shaderProgram = perspectiveMatrix = null 
+gl = canvas = mvMatrix = shaderProgram = perspectiveMatrix = null 
 # squareVerticesBuffer = squareVerticesColorBuffer = null
 vertexPositionAttribute = vertexColorAttribute = null
 # cubeVerticesBuffer = cubeVerticesColorBuffer = cubeVerticesIndexBuffer = null 
@@ -36,17 +36,17 @@ start = ->
 		initBuffers()
 		drawScene()
 
-		setInterval( ->
-			stats.begin()
-			drawScene()
-			stats.end()
-		, 1000 / 60)
+		# setInterval( ->
+		# 	stats.begin()
+		# 	drawScene()
+		# 	stats.end()
+		# , 1000 / 60)
 
 initWebGL = (canvas) ->
 	gl = null
 
 	try 
-		gl = canvas.getContext('experimental-webgl', {antialias: true})
+		gl = canvas.getContext('webgl')
 	catch error 
 		console.log error
 
@@ -210,18 +210,22 @@ initBuffers = ->
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triangleVertexIndices), gl.STATIC_DRAW)
 
 drawScene = ->
+	window.requestAnimationFrame(drawScene, canvas)
+
+	stats.begin()
+
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
 
 	loadIdentity()
 
-	moveSpeed += 0.0265001
+	moveSpeed += 0.0145001
 	mCos = Math.cos(moveSpeed)
 	mSin = Math.sin(moveSpeed)
 	vecX = 3.0 * mCos
 	vecY = 1.5 * mSin
 
-	mvTranslate([vecX, vecY, -10.0])
+	mvTranslate([vecX, vecY, -9.0])
 
 	mvPushMatrix()
 	mvRotate(cubeRotation, [1, 1, 0])
@@ -266,6 +270,8 @@ drawScene = ->
 		# 	zIncValue = -zIncValue
 
 	lastCubeUpdateTime = currentTime
+
+	stats.end()
 
 # Auxiliary functions
 

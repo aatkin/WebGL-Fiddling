@@ -41,12 +41,7 @@
       gl.depthFunc(gl.LEQUAL);
       initShaders();
       initBuffers();
-      drawScene();
-      return setInterval(function() {
-        stats.begin();
-        drawScene();
-        return stats.end();
-      }, 1000 / 60);
+      return drawScene();
     }
   };
 
@@ -54,9 +49,7 @@
     var error;
     gl = null;
     try {
-      gl = canvas.getContext('experimental-webgl', {
-        antialias: true
-      });
+      gl = canvas.getContext('webgl');
     } catch (_error) {
       error = _error;
       console.log(error);
@@ -97,15 +90,17 @@
 
   drawScene = function() {
     var currentTime, delta, mCos, mSin, vecX, vecY;
+    window.requestAnimationFrame(drawScene, canvas);
+    stats.begin();
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
     loadIdentity();
-    moveSpeed += 0.0265001;
+    moveSpeed += 0.0145001;
     mCos = Math.cos(moveSpeed);
     mSin = Math.sin(moveSpeed);
     vecX = 3.0 * mCos;
     vecY = 1.5 * mSin;
-    mvTranslate([vecX, vecY, -10.0]);
+    mvTranslate([vecX, vecY, -9.0]);
     mvPushMatrix();
     mvRotate(cubeRotation, [1, 1, 0]);
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesBuffer);
@@ -127,7 +122,8 @@
       delta = currentTime - lastCubeUpdateTime;
       cubeRotation += (30 * delta) / 1000.0;
     }
-    return lastCubeUpdateTime = currentTime;
+    lastCubeUpdateTime = currentTime;
+    return stats.end();
   };
 
   initStats = function() {
