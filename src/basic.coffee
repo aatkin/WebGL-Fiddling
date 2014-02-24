@@ -1,18 +1,20 @@
-gl = canvas = squareVerticesBuffer = squareVerticesColorBuffer = mvMatrix = shaderProgram = vertexPositionAttribute = vertexColorAttribute = perspectiveMatrix = null
-cubeVerticesBuffer = cubeVerticesColorBuffer = cubeVerticesIndexBuffer = null
-triangleVerticesBuffer = triangleVerticesColorBuffer = triangleVerticesIndexBuffer = triangleVertexIndices = triangleVertices = null
-cubeRotation = cubeXOffset = cubeYOffset = cubeZOffset = lastCubeUpdateTime = 0
-xIncValue = 0.2
-yIncValue = -0.4
-zIncValue = 0
-horizAspect = 640.0/480.0
+gl = canvas =  mvMatrix = shaderProgram = perspectiveMatrix = null 
+# squareVerticesBuffer = squareVerticesColorBuffer = null
+vertexPositionAttribute = vertexColorAttribute = null
+# cubeVerticesBuffer = cubeVerticesColorBuffer = cubeVerticesIndexBuffer = null 
+triangleVerticesBuffer = triangleVerticesColorBuffer = triangleVerticesIndexBuffer = triangleVertexIndices = 
+	triangleVertices = null 
+cubeRotation = cubeXOffset = cubeYOffset = cubeZOffset = lastCubeUpdateTime = 0 
+xIncValue = 0.2 
+yIncValue = -0.4 
+zIncValue = 0 
+horizAspect = 640.0/480.0 
 mvMatrixStack = []
 
 stats = null
 
 $(document).ready( ->
 	initStats()
-
 	start()
 )
 
@@ -67,8 +69,8 @@ initShaders = () ->
 	vertexPositionAttribute = gl.getAttribLocation(shaderProgram, 'aVertexPosition')
 	gl.enableVertexAttribArray(vertexPositionAttribute)
 
-	vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor')
-	gl.enableVertexAttribArray(vertexColorAttribute)
+	# vertexColorAttribute = gl.getAttribLocation(shaderProgram, 'aVertexColor')
+	# gl.enableVertexAttribArray(vertexColorAttribute)
 
 initBuffers = ->
 	# cubeVerticesBuffer = gl.createBuffer()
@@ -181,7 +183,8 @@ initBuffers = ->
 	# cubeVerticesColorBuffer = gl.createBuffer()
 	# triangleVerticesColorBuffer = gl.createBuffer()
 	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesColorBuffer)
-	# gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), gl.STATIC_DRAW)
+	# gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), 
+	#	gl.STATIC_DRAW)
 
 	# cubeVerticesIndexBuffer = gl.createBuffer()
 	triangleVerticesIndexBuffer = gl.createBuffer()
