@@ -46,7 +46,7 @@ initWebGL = (canvas) ->
 	gl = null
 
 	try 
-		gl = canvas.getContext('experimental-webgl')
+		gl = canvas.getContext('experimental-webgl', {antialias: true})
 	catch error 
 		console.log error
 
@@ -215,7 +215,7 @@ drawScene = ->
 
 	loadIdentity()
 
-	moveSpeed += 0.0125001
+	moveSpeed += 0.0265001
 	mCos = Math.cos(moveSpeed)
 	mSin = Math.sin(moveSpeed)
 	vecX = 3.0 * mCos

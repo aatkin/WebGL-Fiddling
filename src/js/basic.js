@@ -54,7 +54,9 @@
     var error;
     gl = null;
     try {
-      gl = canvas.getContext('experimental-webgl');
+      gl = canvas.getContext('experimental-webgl', {
+        antialias: true
+      });
     } catch (_error) {
       error = _error;
       console.log(error);
@@ -98,7 +100,7 @@
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     perspectiveMatrix = makePerspective(45, 640.0 / 480.0, 0.1, 100.0);
     loadIdentity();
-    moveSpeed += 0.0125001;
+    moveSpeed += 0.0265001;
     mCos = Math.cos(moveSpeed);
     mSin = Math.sin(moveSpeed);
     vecX = 3.0 * mCos;
