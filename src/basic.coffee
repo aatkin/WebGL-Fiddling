@@ -238,13 +238,13 @@ drawScene = ->
 	
 	# setColorUniform(0.0, 0.0, 0.0, 1.0)
 	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
+	setColorUniform(0.0, 0.0, 0.0, 1.0)
+	gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
 	if mCos > 0.0
 		setColorUniform(0.0, 0.0, 0.0, 0.0)
 		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
-		setColorUniform(0.0, 0.0, 0.0, Math.abs(mCos))
-		gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
 	else
-		setColorUniform(mCos, 0.0, 0.0, Math.abs(mCos))
+		setColorUniform(0.0, 0.0, 0.0, Math.abs(mCos))
 		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
 	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
 
