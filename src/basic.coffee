@@ -51,7 +51,7 @@ initWebGL = (canvas) ->
 		console.log error
 
 	if !gl
-		alert 'Unable to initialize WebGL. Your browser may not support it.'
+		console.log 'Unable to initialize WebGL. Your browser may not support it.'
 
 initShaders = () ->
 	vertexShader = getShader(gl, 'shader-vs')
@@ -63,7 +63,7 @@ initShaders = () ->
 	gl.linkProgram(shaderProgram)
 
 	if !gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)
-		alert 'Unable to initialize the shader program.'
+		console.log 'Unable to initialize the shader program.'
 
 	gl.useProgram(shaderProgram)
 
@@ -166,26 +166,26 @@ initBuffers = ->
 	# ]
 
 	# front, back, bottom, right, left
-	colors = [
-		[1.0,  0.0,  0.0,  1.0], 
-	    [0.9,  0.0,  0.0,  1.0],
-	    [0.7,  0.0,  0.0,  1.0],
-	    [0.6,  0.0,  0.0,  1.0],
-	    [0.5,  0.0,  0.0,  1.0] 
-	]
+	# colors = [
+	# 	[1.0,  0.0,  0.0,  1.0], 
+	#     [0.9,  0.0,  0.0,  1.0],
+	#     [0.7,  0.0,  0.0,  1.0],
+	#     [0.6,  0.0,  0.0,  1.0],
+	#     [0.5,  0.0,  0.0,  1.0] 
+	# ]
 
-	generatedColors = []
+	# generatedColors = []
+	generatedColors = [0.0, 0.0, 0.0, 1.0]
 
-	for row in [0..4] by 1
-		side = colors[row]
-		for index in [0..3] by 1
-			generatedColors = generatedColors.concat side
+	# for row in [0..4] by 1
+	# 	side = colors[row]
+	# 	for index in [0..3] by 1
+	# 		generatedColors = generatedColors.concat side
 
 	# cubeVerticesColorBuffer = gl.createBuffer()
 	# triangleVerticesColorBuffer = gl.createBuffer()
 	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesColorBuffer)
-	# gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), 
-	#	gl.STATIC_DRAW)
+	# gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), gl.STATIC_DRAW)
 
 	# cubeVerticesIndexBuffer = gl.createBuffer()
 	triangleVerticesIndexBuffer = gl.createBuffer()
@@ -215,9 +215,11 @@ drawScene = ->
 
 	loadIdentity()
 
-	moveSpeed += 0.0125
-	vecX = 3.0 * Math.cos(moveSpeed)
-	vecY = 1.5 * Math.sin(moveSpeed)
+	moveSpeed += 0.0125001
+	mCos = Math.cos(moveSpeed)
+	mSin = Math.sin(moveSpeed)
+	vecX = 3.0 * mCos
+	vecY = 1.5 * mSin
 
 	mvTranslate([vecX, vecY, -10.0])
 
@@ -233,8 +235,18 @@ drawScene = ->
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleVerticesIndexBuffer)
 	setMatrixUniforms()
-	# gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
-	gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
+	
+	# setColorUniform(0.0, 0.0, 0.0, 1.0)
+	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
+	if mCos > 0.0
+		setColorUniform(0.0, 0.0, 0.0, 0.0)
+		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
+		setColorUniform(0.0, 0.0, 0.0, Math.abs(mCos))
+		gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
+	else
+		setColorUniform(mCos, 0.0, 0.0, Math.abs(mCos))
+		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
+	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
 
 	mvPopMatrix()
 
@@ -290,7 +302,7 @@ getShader = (gl, id) ->
 	gl.compileShader(shader)
 
 	if !gl.getShaderParameter(shader, gl.COMPILE_STATUS)
-		alert 'An error occurred compiling the shaders: ', gl.getShaderInfoLog(shader)
+		console.log 'An error occurred compiling the shaders: ', gl.getShaderInfoLog(shader)
 
 	return shader
 
@@ -309,6 +321,12 @@ setMatrixUniforms = ->
 
 	mvUniform = gl.getUniformLocation(shaderProgram, 'uMVMatrix')
 	gl.uniformMatrix4fv(mvUniform, false, new Float32Array(mvMatrix.flatten()))
+
+setColorUniform = (factorR, factorG, factorB, factorA) ->
+	fragColor = [(1.0 * factorR), (1.0 * factorG), (1.0 * factorB), (1.0 * factorA)]
+
+	colorUniform = gl.getUniformLocation(shaderProgram, 'colorUniform')
+	gl.uniform4fv(colorUniform, new Float32Array(fragColor))
 
 mvPushMatrix = (m) ->
 	if m
