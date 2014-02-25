@@ -1,18 +1,24 @@
-gl = canvas = mvMatrix = shaderProgram = perspectiveMatrix = null 
-# squareVerticesBuffer = squareVerticesColorBuffer = null
+# Main variables for canvas and shaders
+gl = canvas = shaderProgram = null 
+horizAspect = 640.0/480.0 
+stats = null
+# Variables for shader attributes
 vertexPositionAttribute = vertexColorAttribute = null
-# cubeVerticesBuffer = cubeVerticesColorBuffer = cubeVerticesIndexBuffer = null 
+# pyramid vertex array object & buffer variables
 triangleVerticesBuffer = triangleVerticesColorBuffer = triangleVerticesIndexBuffer = triangleVertexIndices = 
 	triangleVertices = null 
-cubeRotation = cubeXOffset = cubeYOffset = cubeZOffset = lastCubeUpdateTime = 0 
+# sphere vertex array object & buffer variables
+sphereVertexPositionBuffer = sphereIndexBuffer = null
+# animation variables
+rotation = lastUpdateTime = 0 
 xIncValue = 0.2 
 yIncValue = -0.4 
 zIncValue = 0 
-horizAspect = 640.0/480.0 
-mvMatrixStack = []
 moveSpeed = 1
+# matrix variables for transformations and such
+mvMatrix = perspectiveMatrix = null
+mvMatrixStack = []
 
-stats = null
 
 $(document).ready( ->
 	initStats()
@@ -74,50 +80,122 @@ initShaders = () ->
 	# gl.enableVertexAttribArray(vertexColorAttribute)
 
 initBuffers = ->
-	# cubeVerticesBuffer = gl.createBuffer()
-	# gl.bindBuffer(gl.ARRAY_BUFFER, cubeVerticesBuffer)
+	initSphereBuffers(30, 30, 1.5)
+
+drawScene = ->
+	window.requestAnimationFrame(drawScene, canvas)
+
+	stats.begin()
+
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
+
+	loadIdentity()
+
+	moveSpeed += 0.0145001
+	mCos = Math.cos(moveSpeed)
+	absmCos = Math.abs(mCos)
+	mSin = Math.sin(moveSpeed)
+	vecX = 2.5 * mCos
+	vecY = 1.5 * mSin
+
+	mvTranslate([vecX, vecY, -8.0])
+
+	mvPushMatrix()
+	mvRotate(rotation, [1, 1, 0])
+
+	setColorUniform(0.0, 0.0, 0.0, 1.0)
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer)
+	gl.vertexAttribPointer(vertexPositionAttribute, sphereVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0)
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereIndexBuffer)
+	gl.drawElements(gl.LINE_STRIP, sphereIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0)
+
+	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesBuffer)
+	# gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0)
+
+	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesColorBuffer)
+	# gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0)
+
+	# gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleVerticesIndexBuffer)
+	
+	# setColorUniform(0.0, 0.0, 0.0, 1.0)
+	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
+	# if absmCos < 0.01
+	# 	setColorUniform(0.0, 0.0, 0.0, 0.0)
+	# 	gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
+	# else
+	# 	setColorUniform(absmCos, 0.0, 0.0, absmCos)
+	# 	gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
+
+	
+	setMatrixUniforms()
+	
+	mvPopMatrix()
+
+	currentTime = (new Date).getTime()
+
+	if lastUpdateTime
+		delta = currentTime - lastUpdateTime
+		rotation += (30 * delta) / 1000.0
+
+	lastUpdateTime = currentTime
+
+	stats.end()
+
+initSphereBuffers = (latitudeBands, longitudeBands, radius) ->
+	indexData = []
+	vertexPositionData = []
+
+	for latNumber in [0..latitudeBands] by 1
+		console.log latNumber
+		theta = latNumber * Math.PI / latitudeBands
+		sinTheta = Math.sin(theta)
+		cosTheta = Math.cos(theta)
+
+		for longNumber in [0..longitudeBands] by 1
+			phi = longNumber * 2 * Math.PI / longitudeBands
+			sinPhi = Math.sin(phi)
+			cosPhi = Math.cos(phi)
+
+			x = cosPhi * sinTheta
+			y = cosTheta
+			z = sinPhi * sinTheta
+
+			vertexPositionData.push(radius * x)
+			vertexPositionData.push(radius * y)
+			vertexPositionData.push(radius * z)
+
+	for latNumber in [0..(latitudeBands - 1)] by 1
+		for longNumber in [0..(longitudeBands - 1)] by 1
+			first = (latNumber * (longitudeBands + 1)) + longNumber
+			second = first + longitudeBands + 1
+
+			indexData.push(first)
+			indexData.push(second)
+			indexData.push(first + 1)
+
+			indexData.push(second)
+			indexData.push(second + 1)
+			indexData.push(first + 1)
+
+	sphereVertexPositionBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer)
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPositionData), gl.STATIC_DRAW)
+	sphereVertexPositionBuffer.itemSize = 3
+	sphereVertexPositionBuffer.numItems = vertexPositionData.length / 3
+
+	sphereIndexBuffer = gl.createBuffer()
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, sphereIndexBuffer)
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexData), gl.STATIC_DRAW)
+	sphereIndexBuffer.itemSize = 1
+	sphereIndexBuffer.numItems = indexData.length
+
+initPyramidBuffers = ->
 	triangleVerticesBuffer = gl.createBuffer()
 	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesBuffer)
 
-	# vertices = [
-	# 	# Front face
-	#     -1.0, -1.0,  1.0,
-	#      1.0, -1.0,  1.0,
-	#      1.0,  1.0,  1.0,
-	#     -1.0,  1.0,  1.0,
-	    
-	#     # Back face
-	#     -1.0, -1.0, -1.0,
-	#     -1.0,  1.0, -1.0,
-	#      1.0,  1.0, -1.0,
-	#      1.0, -1.0, -1.0,
-	    
-	#     # Top face
-	#     -1.0,  1.0, -1.0,
-	#     -1.0,  1.0,  1.0,
-	#      1.0,  1.0,  1.0,
-	#      1.0,  1.0, -1.0,
-	    
-	#     # Bottom face
-	#     -1.0, -1.0, -1.0,
-	#      1.0, -1.0, -1.0,
-	#      1.0, -1.0,  1.0,
-	#     -1.0, -1.0,  1.0,
-	    
-	#     # Right face
-	#      1.0, -1.0, -1.0,
-	#      1.0,  1.0, -1.0,
-	#      1.0,  1.0,  1.0,
-	#      1.0, -1.0,  1.0,
-	    
-	#     # Left face
-	#     -1.0, -1.0, -1.0,
-	#     -1.0, -1.0,  1.0,
-	#     -1.0,  1.0,  1.0,
-	#     -1.0,  1.0, -1.0
-	# ]
-
-	# triangle vertices
 	triangleVertices = [
 		# Front face
 		-1.0, -1.0, 1.0,
@@ -148,57 +226,9 @@ initBuffers = ->
 
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW)
 
-	# colors = [
-	# 	1.0, 1.0, 1.0, 1.0,
-	# 	1.0, 0.0, 0.0, 1.0,
-	# 	0.0, 1.0, 0.0, 1.0,
-	# 	0.0, 0.0, 1.0, 1.0
-	# ]
-
-	# front, back, top, bottom, right, left
-	# colors = [
-	# 	[1.0,  0.0,  0.0,  1.0], 
-	#     [0.9,  0.0,  0.0,  1.0],
-	#     [0.8,  0.0,  0.0,  1.0],
-	#     [0.7,  0.0,  0.0,  1.0],
-	#     [0.6,  0.0,  0.0,  1.0],
-	#     [0.5,  0.0,  0.0,  1.0] 
-	# ]
-
-	# front, back, bottom, right, left
-	# colors = [
-	# 	[1.0,  0.0,  0.0,  1.0], 
-	#     [0.9,  0.0,  0.0,  1.0],
-	#     [0.7,  0.0,  0.0,  1.0],
-	#     [0.6,  0.0,  0.0,  1.0],
-	#     [0.5,  0.0,  0.0,  1.0] 
-	# ]
-
-	# generatedColors = []
-	generatedColors = [0.0, 0.0, 0.0, 1.0]
-
-	# for row in [0..4] by 1
-	# 	side = colors[row]
-	# 	for index in [0..3] by 1
-	# 		generatedColors = generatedColors.concat side
-
-	# cubeVerticesColorBuffer = gl.createBuffer()
-	# triangleVerticesColorBuffer = gl.createBuffer()
-	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesColorBuffer)
-	# gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(generatedColors), gl.STATIC_DRAW)
-
-	# cubeVerticesIndexBuffer = gl.createBuffer()
 	triangleVerticesIndexBuffer = gl.createBuffer()
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleVerticesIndexBuffer)
 
-	# cubeVertexIndices = [
-	# 	0,  1,  2,      0,  2,  3,
-	#     4,  5,  6,      4,  6,  7,
-	#     8,  9,  10,     8,  10, 11,
-	#     12, 13, 14,     12, 14, 15,
-	#     16, 17, 18,     16, 18, 19,
-	#     20, 21, 22,     20, 22, 23
-	# ]
 	triangleVertexIndices = [
 		0, 1, 2,
 		3, 4, 5,
@@ -208,70 +238,6 @@ initBuffers = ->
 	]
 
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triangleVertexIndices), gl.STATIC_DRAW)
-
-drawScene = ->
-	window.requestAnimationFrame(drawScene, canvas)
-
-	stats.begin()
-
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	perspectiveMatrix = makePerspective(45, 640.0/480.0, 0.1, 100.0)
-
-	loadIdentity()
-
-	moveSpeed += 0.0145001
-	mCos = Math.cos(moveSpeed)
-	mSin = Math.sin(moveSpeed)
-	vecX = 3.0 * mCos
-	vecY = 1.5 * mSin
-
-	mvTranslate([vecX, vecY, -9.0])
-
-	mvPushMatrix()
-	mvRotate(cubeRotation, [1, 1, 0])
-	# mvTranslate([cubeXOffset, cubeYOffset, cubeZOffset])
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesBuffer)
-	gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0)
-
-	# gl.bindBuffer(gl.ARRAY_BUFFER, triangleVerticesColorBuffer)
-	# gl.vertexAttribPointer(vertexColorAttribute, 4, gl.FLOAT, false, 0, 0)
-
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, triangleVerticesIndexBuffer)
-	setMatrixUniforms()
-	
-	# setColorUniform(0.0, 0.0, 0.0, 1.0)
-	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
-	setColorUniform(0.0, 0.0, 0.0, 1.0)
-	gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
-	if mCos > 0.0
-		setColorUniform(0.0, 0.0, 0.0, 0.0)
-		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
-	else
-		setColorUniform(0.0, 0.0, 0.0, Math.abs(mCos))
-		gl.drawElements(gl.TRIANGLES, 18, gl.UNSIGNED_SHORT, 0)
-	# gl.drawElements(gl.LINE_STRIP, 18, gl.UNSIGNED_SHORT, 0)
-
-	mvPopMatrix()
-
-	currentTime = (new Date).getTime()
-
-	if lastCubeUpdateTime
-		delta = currentTime - lastCubeUpdateTime
-
-		cubeRotation += (30 * delta) / 1000.0
-		# cubeXOffset += xIncValue * ((30 * delta) / 1000.0)
-		# cubeYOffset += yIncValue * ((30 * delta) / 1000.0)
-		# cubeZOffset += zIncValue * ((30 * delta) / 1000.0)
-
-		# if Math.abs(cubeYOffset) > 2.5
-		# 	xIncValue = -xIncValue
-		# 	yIncValue = -yIncValue
-		# 	zIncValue = -zIncValue
-
-	lastCubeUpdateTime = currentTime
-
-	stats.end()
 
 # Auxiliary functions
 
